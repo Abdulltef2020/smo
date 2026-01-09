@@ -70,7 +70,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter basename="/smo">
         <AuthProvider>
           <AppRoutes />
         </AuthProvider>
