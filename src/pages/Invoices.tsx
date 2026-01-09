@@ -162,8 +162,6 @@ export default function Invoices() {
                       <TableCell className="font-mono" dir="ltr">{invoice.invoice_number}</TableCell>
                       <TableCell>{getTypeBadge(invoice.invoice_type)}</TableCell>
                       <TableCell>{invoice.customers?.name || '-'}</TableCell>
-                        <TableCell>{invoice.profiles?.full_name || '-'}</TableCell>
-                      )}
                       <TableCell className="font-semibold">
                         {Number(invoice.total_amount).toLocaleString('ar-SA')} ر.س
                       </TableCell>
