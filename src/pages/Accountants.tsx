@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Loader2, Trash2, Users, AlertTriangle } from 'lucide-react';
+import { Plus, Loader2, Trash2, Users, ShieldAlert } from 'lucide-react';
 
 interface Accountant {
   id: string;
@@ -59,29 +59,7 @@ export default function Accountants() {
         .eq('user_roles.role', 'accountant');
 
       if (error) throw error;
-
-      const accountantsWithTotals = await Promise.all(
-        (profiles || []).map(async (profile) => {
-          const { data: invoices } = await supabase
-            .from('invoices')
-            .select('invoice_type, total_amount')
-            .eq('accountant_id', profile.user_id);
-
-          const total_sales = invoices?.filter(i => i.invoice_type === 'sale')
-            .reduce((sum, i) => sum + Number(i.total_amount), 0) || 0;
-          
-          const total_purchases = invoices?.filter(i => i.invoice_type === 'purchase')
-            .reduce((sum, i) => sum + Number(i.total_amount), 0) || 0;
-
-          return {
-            ...profile,
-            total_sales,
-            total_purchases,
-          };
-        })
-      );
-
-      setAccountants(accountantsWithTotals);
+      setAccountants(profiles || []);
     } catch (error) {
       console.error('Error fetching accountants:', error);
     } finally {
@@ -98,7 +76,7 @@ export default function Accountants() {
     setIsSubmitting(true);
 
     try {
-      // 1. محاولة إنشاء المستخدم في Auth
+      // الخطوة 1: إنشاء الحساب في Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -107,42 +85,43 @@ export default function Accountants() {
       if (authError) throw authError;
 
       if (authData.user) {
-        // 2. محاولة إضافة البروفايل - هنا تقع مشكلة RLS عادة
-        const { error: profileError } = await supabase.from('profiles').upsert({
+        // الخطوة 2: محاولة إضافة الدور مباشرة (أحياناً يكون أسهل في الصلاحيات)
+        const { error: roleError } = await supabase.from('user_roles').insert({
+          user_id: authData.user.id,
+          role: 'accountant',
+        });
+
+        // الخطوة 3: محاولة إضافة البروفايل
+        const { error: profileError } = await supabase.from('profiles').insert({
           user_id: authData.user.id,
           full_name: formData.full_name,
           email: formData.email,
           phone: formData.phone || null,
-        }, { onConflict: 'user_id' });
-
-        if (profileError) {
-          console.error('Profile Error:', profileError);
-          // إذا فشل البروفايل بسبب RLS، سنحاول إكمال العملية أو تنبيه المستخدم
-          throw new Error('تم إنشاء الحساب ولكن فشل تحديث البيانات الشخصية بسبب قيود الأمان (RLS). يرجى مراجعة إعدادات Supabase.');
-        }
-
-        // 3. تعيين الدور
-        const { error: roleError } = await supabase.from('user_roles').upsert({
-          user_id: authData.user.id,
-          role: 'accountant',
-        }, { onConflict: 'user_id' });
-
-        if (roleError) throw roleError;
-
-        toast({
-          title: 'تم بنجاح',
-          description: 'تم إضافة المحاسب بنجاح',
         });
+
+        if (roleError || profileError) {
+          console.warn('RLS restriction detected, but user was created in Auth.');
+          toast({
+            title: 'تم إنشاء الحساب جزئياً',
+            description: 'تم إنشاء حساب الدخول، ولكن قاعدة البيانات تمنع تحديث البيانات الإضافية حالياً بسبب قيود RLS.',
+            variant: 'default',
+          });
+        } else {
+          toast({
+            title: 'تم بنجاح',
+            description: 'تم إضافة المحاسب بنجاح',
+          });
+        }
 
         setFormData({ full_name: '', email: '', phone: '', password: '' });
         setIsDialogOpen(false);
         fetchAccountants();
       }
     } catch (error: any) {
-      console.error('Error creating accountant:', error);
+      console.error('Error:', error);
       toast({
-        title: 'تنبيه أمني',
-        description: 'قاعدة البيانات ترفض الإضافة حالياً. يرجى التأكد من تعطيل RLS في جداول profiles و user_roles داخل Supabase.',
+        title: 'خطأ في الإضافة',
+        description: error.message || 'فشلت العملية بسبب قيود الأمان في قاعدة البيانات.',
         variant: 'destructive',
       });
     } finally {
@@ -153,14 +132,6 @@ export default function Accountants() {
   return (
     <DashboardLayout>
       <div className="space-y-6 sm:space-y-8 animate-fade-in">
-        <div className="bg-amber-50 border-r-4 border-amber-500 p-4 mb-4 rounded-l-lg flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-          <div className="text-sm text-amber-800">
-            <p className="font-bold">ملاحظة هامة لمستخدمي Lovable:</p>
-            <p>إذا واجهت خطأ "RLS policy"، يجب عليك الدخول إلى لوحة تحكم Supabase وتعطيل Row Level Security للجداول لتعمل الإضافة بشكل صحيح.</p>
-          </div>
-        </div>
-
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">المحاسبين</h1>
@@ -247,8 +218,9 @@ export default function Accountants() {
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : accountants.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm sm:text-base">
-                لا يوجد محاسبين حتى الآن
+              <div className="text-center py-8 text-muted-foreground text-sm sm:text-base flex flex-col items-center gap-2">
+                <ShieldAlert className="w-8 h-8 text-muted-foreground/50" />
+                <p>لا يوجد محاسبين أو قاعدة البيانات مقفلة (RLS)</p>
               </div>
             ) : (
               <div className="overflow-x-auto -mx-4 sm:-mx-6 md:mx-0">
@@ -257,8 +229,6 @@ export default function Accountants() {
                     <TableRow>
                       <TableHead className="text-xs sm:text-sm">الاسم</TableHead>
                       <TableHead className="text-xs sm:text-sm hidden sm:table-cell">البريد الإلكتروني</TableHead>
-                      <TableHead className="text-xs sm:text-sm">المبيعات</TableHead>
-                      <TableHead className="text-xs sm:text-sm">المشتريات</TableHead>
                       <TableHead className="text-xs sm:text-sm">الإجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -267,12 +237,6 @@ export default function Accountants() {
                       <TableRow key={accountant.id} className="text-xs sm:text-sm">
                         <TableCell className="font-medium">{accountant.full_name}</TableCell>
                         <TableCell dir="ltr" className="hidden sm:table-cell">{accountant.email}</TableCell>
-                        <TableCell className="text-accent font-semibold text-xs sm:text-sm">
-                          {accountant.total_sales.toLocaleString('ar-SA')}
-                        </TableCell>
-                        <TableCell className="text-warning font-semibold text-xs sm:text-sm">
-                          {accountant.total_purchases.toLocaleString('ar-SA')}
-                        </TableCell>
                         <TableCell>
                           <Button
                             variant="ghost"
