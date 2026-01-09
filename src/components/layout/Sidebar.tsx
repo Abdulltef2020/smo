@@ -48,7 +48,7 @@ export function Sidebar() {
             <Calculator className="w-5 h-5 text-sidebar-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-bold text-lg">نظام المحاسبة</h1>
+            <h1 className="font-bold text-lg">سمو الأمجاد</h1>
             <p className="text-xs text-sidebar-foreground/60">
               {role === 'admin' ? 'مدير النظام' : 'محاسب'}
             </p>
