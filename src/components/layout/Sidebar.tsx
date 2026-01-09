@@ -53,34 +53,35 @@ export function Sidebar() {
       )}
       
       <aside className={cn(
-        "fixed right-0 top-0 z-40 h-screen w-64 bg-sidebar text-sidebar-foreground border-l border-sidebar-border transition-transform duration-300 ease-in-out",
-        "md:translate-x-0",
+        "fixed right-0 top-0 z-40 h-screen w-64 max-w-[85vw] bg-sidebar text-sidebar-foreground border-l border-sidebar-border transition-transform duration-300 ease-in-out overflow-y-auto",
+        "md:translate-x-0 md:max-w-none",
         isOpen ? "translate-x-0" : "translate-x-full"
       )}>
         <div className="flex h-full flex-col">
           {/* Header with Close Button */}
-          <div className="flex items-center justify-between px-6 py-6 border-b border-sidebar-border">
-            <div className="flex items-center gap-3 flex-1">
-              <div className="w-10 h-10 bg-sidebar-primary rounded-xl flex items-center justify-center">
-                <Calculator className="w-5 h-5 text-sidebar-primary-foreground" />
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-6 border-b border-sidebar-border flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <div className="w-9 sm:w-10 h-9 sm:h-10 bg-sidebar-primary rounded-xl flex items-center justify-center flex-shrink-0">
+                <Calculator className="w-4 sm:w-5 h-4 sm:h-5 text-sidebar-primary-foreground" />
               </div>
-              <div>
-                <h1 className="font-bold text-lg">سمو الأمجاد</h1>
-                <p className="text-xs text-sidebar-foreground/60">
+              <div className="min-w-0">
+                <h1 className="font-bold text-base sm:text-lg truncate">سمو الأمجاد</h1>
+                <p className="text-xs text-sidebar-foreground/60 truncate">
                   {role === 'admin' ? 'مدير النظام' : 'محاسب'}
                 </p>
               </div>
             </div>
             <button
               onClick={closeSidebar}
-              className="md:hidden text-sidebar-foreground/70 hover:text-sidebar-foreground"
+              className="md:hidden text-sidebar-foreground/70 hover:text-sidebar-foreground flex-shrink-0 ml-2"
+              aria-label="إغلاق القائمة"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+          <nav className="flex-1 px-3 sm:px-4 py-4 sm:py-6 space-y-1 sm:space-y-2 overflow-y-auto">
             {filteredNavItems.map((item) => {
               const isActive = location.pathname === item.href;
               return (
@@ -89,31 +90,31 @@ export function Sidebar() {
                   to={item.href}
                   onClick={closeSidebar}
                   className={cn(
-                    'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
+                    'flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl transition-all duration-200 text-sm sm:text-base',
                     isActive
                       ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg'
                       : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                   )}
                 >
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
+                  <item.icon className="w-4 sm:w-5 h-4 sm:h-5 flex-shrink-0" />
+                  <span className="font-medium truncate">{item.label}</span>
                 </Link>
               );
             })}
           </nav>
 
           {/* User & Logout */}
-          <div className="p-4 border-t border-sidebar-border">
-            <div className="px-4 py-3 mb-3 rounded-xl bg-sidebar-accent/50">
-              <p className="text-sm font-medium truncate">{user?.email}</p>
+          <div className="p-3 sm:p-4 border-t border-sidebar-border flex-shrink-0">
+            <div className="px-3 sm:px-4 py-2.5 sm:py-3 mb-2 sm:mb-3 rounded-xl bg-sidebar-accent/50">
+              <p className="text-xs sm:text-sm font-medium truncate">{user?.email}</p>
             </div>
             <Button
               variant="ghost"
-              className="w-full justify-start gap-3 text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10"
+              className="w-full justify-start gap-2 sm:gap-3 text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10 text-sm sm:text-base"
               onClick={signOut}
             >
-              <LogOut className="w-5 h-5" />
-              تسجيل الخروج
+              <LogOut className="w-4 sm:w-5 h-4 sm:h-5 flex-shrink-0" />
+              <span className="truncate">تسجيل الخروج</span>
             </Button>
           </div>
         </div>

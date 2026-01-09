@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -169,60 +169,64 @@ export default function Customers() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8 animate-fade-in">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 sm:space-y-8 animate-fade-in">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">العملاء</h1>
-            <p className="text-muted-foreground mt-2">إدارة بيانات العملاء</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">العملاء</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-2">إدارة بيانات العملاء</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
             setIsDialogOpen(open);
             if (!open) resetForm();
           }}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
+              <Button className="gap-2 w-full sm:w-auto">
                 <Plus className="w-4 h-4" />
                 إضافة عميل
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md w-full mx-4 sm:mx-0">
               <DialogHeader>
-                <DialogTitle>{editingCustomer ? 'تعديل العميل' : 'إضافة عميل جديد'}</DialogTitle>
+                <DialogTitle className="text-lg sm:text-xl">{editingCustomer ? 'تعديل العميل' : 'إضافة عميل جديد'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>اسم العميل</Label>
+                  <Label className="text-sm">اسم العميل</Label>
                   <Input
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
+                    className="text-sm"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>رقم الهاتف</Label>
+                  <Label className="text-sm">رقم الهاتف</Label>
                   <Input
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     dir="ltr"
+                    className="text-sm"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>البريد الإلكتروني</Label>
+                  <Label className="text-sm">البريد الإلكتروني</Label>
                   <Input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     dir="ltr"
+                    className="text-sm"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>العنوان</Label>
+                  <Label className="text-sm">العنوان</Label>
                   <Input
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    className="text-sm"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Button type="submit" className="w-full text-sm" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="ml-2 h-4 w-4 animate-spin" />
@@ -238,10 +242,10 @@ export default function Customers() {
         </div>
 
         <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserCircle className="w-5 h-5" />
-              قائمة العملاء
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <UserCircle className="w-5 h-5 flex-shrink-0" />
+              <span className="truncate">قائمة العملاء</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -250,52 +254,57 @@ export default function Customers() {
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : customers.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-muted-foreground text-sm sm:text-base">
                 لا يوجد عملاء حتى الآن
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>الاسم</TableHead>
-                    <TableHead>الهاتف</TableHead>
-                    <TableHead>البريد الإلكتروني</TableHead>
-                    <TableHead>العنوان</TableHead>
-                    <TableHead>الإجراءات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {customers.map((customer) => (
-                    <TableRow key={customer.id}>
-                      <TableCell className="font-medium">{customer.name}</TableCell>
-                      <TableCell dir="ltr">{customer.phone || '-'}</TableCell>
-                      <TableCell dir="ltr">{customer.email || '-'}</TableCell>
-                      <TableCell>{customer.address || '-'}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(customer)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          {role === 'admin' && (
+              <div className="overflow-x-auto -mx-4 sm:-mx-6 md:mx-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm">الاسم</TableHead>
+                      <TableHead className="text-xs sm:text-sm hidden sm:table-cell">الهاتف</TableHead>
+                      <TableHead className="text-xs sm:text-sm hidden md:table-cell">البريد الإلكتروني</TableHead>
+                      <TableHead className="text-xs sm:text-sm hidden lg:table-cell">العنوان</TableHead>
+                      <TableHead className="text-xs sm:text-sm">الإجراءات</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customers.map((customer) => (
+                      <TableRow key={customer.id} className="text-xs sm:text-sm">
+                        <TableCell className="font-medium">{customer.name}</TableCell>
+                        <TableCell dir="ltr" className="hidden sm:table-cell">{customer.phone || '-'}</TableCell>
+                        <TableCell dir="ltr" className="hidden md:table-cell">{customer.email || '-'}</TableCell>
+                        <TableCell className="hidden lg:table-cell">{customer.address || '-'}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
                             <Button
                               variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => handleDelete(customer.id)}
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => handleEdit(customer)}
+                              title="تعديل"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Edit className="w-4 h-4" />
                             </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                            {role === 'admin' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => handleDelete(customer.id)}
+                                title="حذف"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>

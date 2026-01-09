@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -87,35 +87,35 @@ export default function Invoices() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
-        return <Badge className="bg-accent text-accent-foreground">مدفوعة</Badge>;
+        return <Badge className="bg-accent text-accent-foreground text-xs">مدفوعة</Badge>;
       case 'pending':
-        return <Badge variant="secondary">معلقة</Badge>;
+        return <Badge variant="secondary" className="text-xs">معلقة</Badge>;
       case 'cancelled':
-        return <Badge variant="destructive">ملغاة</Badge>;
+        return <Badge variant="destructive" className="text-xs">ملغاة</Badge>;
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return <Badge variant="secondary" className="text-xs">{status}</Badge>;
     }
   };
 
   const getTypeBadge = (type: string) => {
     return type === 'sale' ? (
-      <Badge className="bg-accent/20 text-accent border-accent/30">مبيعات</Badge>
+      <Badge className="bg-accent/20 text-accent border-accent/30 text-xs">مبيعات</Badge>
     ) : (
-      <Badge className="bg-warning/20 text-warning border-warning/30">مشتريات</Badge>
+      <Badge className="bg-warning/20 text-warning border-warning/30 text-xs">مشتريات</Badge>
     );
   };
 
   return (
     <DashboardLayout>
-      <div className="space-y-8 animate-fade-in">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 sm:space-y-8 animate-fade-in">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">الفواتير</h1>
-            <p className="text-muted-foreground mt-2">عرض جميع الفواتير</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">الفواتير</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-2">عرض جميع الفواتير</p>
           </div>
-          <div className="flex gap-4">
+          <div className="w-full sm:w-auto">
             <Select value={filter} onValueChange={(value: 'all' | 'sale' | 'purchase') => setFilter(value)}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full sm:w-40">
                 <SelectValue placeholder="تصفية" />
               </SelectTrigger>
               <SelectContent>
@@ -128,10 +128,10 @@ export default function Invoices() {
         </div>
 
         <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              قائمة الفواتير
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <FileText className="w-5 h-5 flex-shrink-0" />
+              <span className="truncate">قائمة الفواتير</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -140,53 +140,55 @@ export default function Invoices() {
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : invoices.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-muted-foreground text-sm sm:text-base">
                 لا توجد فواتير حتى الآن
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>رقم الفاتورة</TableHead>
-                    <TableHead>النوع</TableHead>
-                    <TableHead>العميل</TableHead>
-                    <TableHead>المبلغ</TableHead>
-                    <TableHead>الحالة</TableHead>
-                    <TableHead>التاريخ</TableHead>
-                    <TableHead>الإجراءات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {invoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-mono" dir="ltr">{invoice.invoice_number}</TableCell>
-                      <TableCell>{getTypeBadge(invoice.invoice_type)}</TableCell>
-                      <TableCell>{invoice.customers?.name || '-'}</TableCell>
-                      <TableCell className="font-semibold">
-                        {Number(invoice.total_amount).toLocaleString('ar-SA')} ر.س
-                      </TableCell>
-                      <TableCell>{getStatusBadge(invoice.status)}</TableCell>
-                      <TableCell>
-                        {format(new Date(invoice.invoice_date), 'dd MMM yyyy', { locale: ar })}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="icon" asChild>
-                            <Link to={`/invoice/${invoice.id}`}>
-                              <Eye className="w-4 h-4" />
-                            </Link>
-                          </Button>
-                          <Button variant="ghost" size="icon" asChild>
-                            <Link to={`/invoice/${invoice.id}/print`}>
-                              <Printer className="w-4 h-4" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </TableCell>
+              <div className="overflow-x-auto -mx-4 sm:-mx-6 md:mx-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm">رقم الفاتورة</TableHead>
+                      <TableHead className="text-xs sm:text-sm">النوع</TableHead>
+                      <TableHead className="text-xs sm:text-sm hidden sm:table-cell">العميل</TableHead>
+                      <TableHead className="text-xs sm:text-sm">المبلغ</TableHead>
+                      <TableHead className="text-xs sm:text-sm">الحالة</TableHead>
+                      <TableHead className="text-xs sm:text-sm hidden md:table-cell">التاريخ</TableHead>
+                      <TableHead className="text-xs sm:text-sm">الإجراءات</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {invoices.map((invoice) => (
+                      <TableRow key={invoice.id} className="text-xs sm:text-sm">
+                        <TableCell className="font-mono text-xs sm:text-sm" dir="ltr">{invoice.invoice_number}</TableCell>
+                        <TableCell>{getTypeBadge(invoice.invoice_type)}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{invoice.customers?.name || '-'}</TableCell>
+                        <TableCell className="font-semibold text-xs sm:text-sm">
+                          {Number(invoice.total_amount).toLocaleString('ar-SA')} ر.س
+                        </TableCell>
+                        <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                        <TableCell className="hidden md:table-cell text-xs sm:text-sm">
+                          {format(new Date(invoice.invoice_date), 'dd MMM', { locale: ar })}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" asChild>
+                              <Link to={`/invoice/${invoice.id}`} title="عرض">
+                                <Eye className="w-4 h-4" />
+                              </Link>
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" asChild>
+                              <Link to={`/invoice/${invoice.id}/print`} title="طباعة">
+                                <Printer className="w-4 h-4" />
+                              </Link>
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>

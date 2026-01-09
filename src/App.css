@@ -1,42 +1,145 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+/* Mobile-First Responsive Design */
+
+/* Prevent layout shift on mobile */
+html, body {
+  overflow-x: hidden;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Responsive Typography */
+@media (max-width: 640px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+  }
+  
+  h3 {
+    font-size: 1.1rem;
+  }
 }
 
-@keyframes logo-spin {
+/* Sidebar Mobile Optimization */
+@media (max-width: 768px) {
+  aside {
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* Table Responsive */
+@media (max-width: 640px) {
+  table {
+    font-size: 0.875rem;
+  }
+  
+  td, th {
+    padding: 0.5rem 0.25rem;
+  }
+}
+
+/* Card Responsive */
+@media (max-width: 640px) {
+  .card {
+    padding: 1rem;
+  }
+}
+
+/* Button Responsive */
+@media (max-width: 640px) {
+  button {
+    min-height: 2.5rem;
+    min-width: 2.5rem;
+  }
+}
+
+/* Dialog Mobile Optimization */
+@media (max-width: 640px) {
+  [role="dialog"] {
+    width: 90vw;
+    max-width: 90vw;
+    margin: auto;
+  }
+}
+
+/* Input Focus States */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Touch-Friendly Elements */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Prevent zoom on input focus */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+/* Smooth transitions */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Print Styles */
+@media print {
+  body {
+    direction: rtl;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Animation */
+@keyframes fadeIn {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: translateY(10px);
   }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
 }

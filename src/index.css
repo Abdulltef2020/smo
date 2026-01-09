@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
@@ -106,15 +106,92 @@
     @apply border-border;
   }
 
+  html {
+    @apply scroll-smooth;
+  }
+
   body {
     @apply bg-background text-foreground font-cairo;
     direction: rtl;
+    overflow-x: hidden;
+  }
+
+  /* Responsive Font Sizes */
+  h1 {
+    @apply text-2xl sm:text-3xl md:text-4xl font-bold;
+  }
+
+  h2 {
+    @apply text-xl sm:text-2xl md:text-3xl font-bold;
+  }
+
+  h3 {
+    @apply text-lg sm:text-xl font-semibold;
+  }
+
+  /* Responsive Padding */
+  main {
+    @apply p-4 sm:p-6 md:p-8;
+  }
+}
+
+@layer components {
+  /* Responsive Card */
+  .card {
+    @apply rounded-lg border border-border bg-card text-card-foreground shadow-sm;
+  }
+
+  /* Responsive Button */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md font-medium transition-colors;
+  }
+
+  /* Touch-friendly elements */
+  @media (hover: none) and (pointer: coarse) {
+    button,
+    a,
+    [role="button"] {
+      @apply min-h-[44px] min-w-[44px];
+    }
   }
 }
 
 @layer utilities {
   .font-cairo {
     font-family: 'Cairo', sans-serif;
+  }
+
+  /* Responsive Container */
+  .container-responsive {
+    @apply w-full px-4 sm:px-6 md:px-8 mx-auto;
+  }
+
+  /* Safe Area */
+  .safe-area {
+    @apply p-4 sm:p-6 md:p-8;
+  }
+
+  /* Scrollbar Styling */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
   }
 }
 
@@ -133,4 +210,30 @@
   .print-only {
     display: block !important;
   }
+}
+
+/* Prevent zoom on input focus */
+@media (max-width: 1024px) {
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 16px;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection color */
+::selection {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+::-moz-selection {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
 }

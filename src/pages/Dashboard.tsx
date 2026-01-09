@@ -104,46 +104,47 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8 animate-fade-in">
+      <div className="space-y-6 sm:space-y-8 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">لوحة التحكم</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">لوحة التحكم</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-2">
             مرحباً بك في نظام المحاسبة
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Stats Grid - Responsive */}
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {statCards.map((stat, index) => (
             <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                   {stat.title}
                 </CardTitle>
                 <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                  <stat.icon className="w-4 sm:w-5 h-4 sm:h-5" style={{ color: `hsl(var(--${stat.color.split('-')[1]}))` }} />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{loading ? '...' : stat.value}</div>
+                <div className="text-xl sm:text-2xl font-bold truncate">{loading ? '...' : stat.value}</div>
               </CardContent>
             </Card>
           ))}
         </div>
 
         {/* Quick Stats */}
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
           <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-accent" />
-                صافي الربح
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <DollarSign className="w-5 h-5 text-accent flex-shrink-0" />
+                <span className="truncate">صافي الربح</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-accent">
+              <div className="text-2xl sm:text-3xl font-bold text-accent break-words">
                 {loading ? '...' : `${(stats.totalSales - stats.totalPurchases).toLocaleString('ar-SA')} ر.س`}
               </div>
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                 الفرق بين المبيعات والمشتريات
               </p>
             </CardContent>

@@ -16,21 +16,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <Sidebar />
       
       {/* Mobile Header with Menu Button */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-20 bg-background border-b border-border">
-        <div className="flex items-center justify-between p-4">
-          <h1 className="font-bold text-lg">سمو الأمجاد</h1>
+      <header className="md:hidden fixed top-0 left-0 right-0 z-20 bg-background border-b border-border h-16">
+        <div className="flex items-center justify-between px-4 h-full">
+          <h1 className="font-bold text-base sm:text-lg truncate">سمو الأمجاد</h1>
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
-            className="md:hidden"
+            className="md:hidden flex-shrink-0"
+            aria-label="فتح القائمة"
           >
             <Menu className="w-5 h-5" />
           </Button>
         </div>
-      </div>
+      </header>
       
-      <main className="md:mr-64 min-h-screen md:p-8 p-4 pt-20 md:pt-8">
+      {/* Main Content */}
+      <main className="md:mr-64 min-h-screen pt-16 md:pt-0 md:p-8 p-4 sm:p-6">
         {children}
       </main>
     </div>
