@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -108,9 +108,19 @@ export default function Accountants() {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
+        options: {
+          data: {
+            full_name: formData.full_name,
+          }
+        }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        if (authError.message.includes('Database error saving next auth response')) {
+          throw new Error('خطأ في قاعدة البيانات. قد تحتاج لتفعيل صلاحيات RLS في Supabase.');
+        }
+        throw authError;
+      }
 
       if (authData.user) {
         // Create profile
@@ -133,7 +143,7 @@ export default function Accountants() {
 
         toast({
           title: 'تم بنجاح',
-          description: 'تم إضافة المحاسب بنجاح',
+          description: 'تم إضافة المحاسب بنجاح. إذا لم يظهر في القائمة، يرجى التأكد من تفعيل الحساب من البريد الإلكتروني.',
         });
 
         setFormData({ full_name: '', email: '', phone: '', password: '' });
@@ -143,8 +153,8 @@ export default function Accountants() {
     } catch (error: any) {
       console.error('Error creating accountant:', error);
       toast({
-        title: 'خطأ',
-        description: error.message || 'حدث خطأ في إضافة المحاسب',
+        title: 'فشل الإضافة',
+        description: error.message || 'حدث خطأ غير متوقع',
         variant: 'destructive',
       });
     } finally {
@@ -179,52 +189,55 @@ export default function Accountants() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8 animate-fade-in">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 sm:space-y-8 animate-fade-in">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">المحاسبين</h1>
-            <p className="text-muted-foreground mt-2">إدارة المحاسبين في النظام</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">المحاسبين</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-2">إدارة المحاسبين في النظام</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
+              <Button className="gap-2 w-full sm:w-auto">
                 <Plus className="w-4 h-4" />
                 إضافة محاسب
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md w-full mx-4 sm:mx-0">
               <DialogHeader>
-                <DialogTitle>إضافة محاسب جديد</DialogTitle>
+                <DialogTitle className="text-lg sm:text-xl">إضافة محاسب جديد</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>الاسم الكامل</Label>
+                  <Label className="text-sm">الاسم الكامل</Label>
                   <Input
                     value={formData.full_name}
                     onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                     required
+                    className="text-sm"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>البريد الإلكتروني</Label>
+                  <Label className="text-sm">البريد الإلكتروني</Label>
                   <Input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
                     dir="ltr"
+                    className="text-sm"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>رقم الهاتف</Label>
+                  <Label className="text-sm">رقم الهاتف</Label>
                   <Input
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     dir="ltr"
+                    className="text-sm"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>كلمة المرور</Label>
+                  <Label className="text-sm">كلمة المرور</Label>
                   <Input
                     type="password"
                     value={formData.password}
@@ -232,9 +245,10 @@ export default function Accountants() {
                     required
                     minLength={6}
                     dir="ltr"
+                    className="text-sm"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Button type="submit" className="w-full text-sm" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="ml-2 h-4 w-4 animate-spin" />
@@ -250,10 +264,10 @@ export default function Accountants() {
         </div>
 
         <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              قائمة المحاسبين
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <Users className="w-5 h-5 flex-shrink-0" />
+              <span className="truncate">قائمة المحاسبين</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -262,47 +276,48 @@ export default function Accountants() {
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : accountants.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-muted-foreground text-sm sm:text-base">
                 لا يوجد محاسبين حتى الآن
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>الاسم</TableHead>
-                    <TableHead>البريد الإلكتروني</TableHead>
-                    <TableHead>الهاتف</TableHead>
-                    <TableHead>إجمالي المبيعات</TableHead>
-                    <TableHead>إجمالي المشتريات</TableHead>
-                    <TableHead>الإجراءات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {accountants.map((accountant) => (
-                    <TableRow key={accountant.id}>
-                      <TableCell className="font-medium">{accountant.full_name}</TableCell>
-                      <TableCell dir="ltr">{accountant.email}</TableCell>
-                      <TableCell dir="ltr">{accountant.phone || '-'}</TableCell>
-                      <TableCell className="text-accent font-semibold">
-                        {accountant.total_sales.toLocaleString('ar-SA')} ر.س
-                      </TableCell>
-                      <TableCell className="text-warning font-semibold">
-                        {accountant.total_purchases.toLocaleString('ar-SA')} ر.س
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => handleDelete(accountant.user_id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
+              <div className="overflow-x-auto -mx-4 sm:-mx-6 md:mx-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm">الاسم</TableHead>
+                      <TableHead className="text-xs sm:text-sm hidden sm:table-cell">البريد الإلكتروني</TableHead>
+                      <TableHead className="text-xs sm:text-sm">المبيعات</TableHead>
+                      <TableHead className="text-xs sm:text-sm">المشتريات</TableHead>
+                      <TableHead className="text-xs sm:text-sm">الإجراءات</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {accountants.map((accountant) => (
+                      <TableRow key={accountant.id} className="text-xs sm:text-sm">
+                        <TableCell className="font-medium">{accountant.full_name}</TableCell>
+                        <TableCell dir="ltr" className="hidden sm:table-cell">{accountant.email}</TableCell>
+                        <TableCell className="text-accent font-semibold text-xs sm:text-sm">
+                          {accountant.total_sales.toLocaleString('ar-SA')}
+                        </TableCell>
+                        <TableCell className="text-warning font-semibold text-xs sm:text-sm">
+                          {accountant.total_purchases.toLocaleString('ar-SA')}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDelete(accountant.user_id)}
+                            title="حذف"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>
