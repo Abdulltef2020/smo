@@ -105,7 +105,7 @@ export default function CreateInvoice() {
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
         .insert({
-          invoice_number: '',
+          invoice_number: `INV-${Date.now()}`,
           invoice_type: type as string,
           customer_id: customerId || null,
           accountant_id: user?.id as string,
@@ -113,6 +113,8 @@ export default function CreateInvoice() {
           tax_amount: taxAmount,
           total_amount: total,
           notes: notes || null,
+          status: 'paid',
+          invoice_date: new Date().toISOString(),
         })
         .select()
         .single();
@@ -143,8 +145,10 @@ export default function CreateInvoice() {
     } catch (error: any) {
       console.error('Error creating invoice:', error);
       toast({
-        title: 'خطأ',
-        description: error.message || 'حدث خطأ في إنشاء الفاتورة',
+        title: 'خطأ في إنشاء الفاتورة',
+        description: error.message.includes('row-level security') 
+          ? 'لا تملك صلاحية لإضافة فاتورة. يرجى التأكد من إعدادات RLS في Supabase.'
+          : error.message || 'حدث خطأ غير متوقع',
         variant: 'destructive',
       });
     } finally {
@@ -156,29 +160,29 @@ export default function CreateInvoice() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8 animate-fade-in">
+      <div className="space-y-6 sm:space-y-8 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2 sm:gap-3">
             {isSale ? (
-              <ShoppingCart className="w-8 h-8 text-accent" />
+              <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8 text-accent" />
             ) : (
-              <ShoppingBag className="w-8 h-8 text-warning" />
+              <ShoppingBag className="w-6 h-6 sm:w-8 sm:h-8 text-warning" />
             )}
-            {isSale ? 'فاتورة مبيعات جديدة' : 'فاتورة مشتريات جديدة'}
+            <span className="truncate">{isSale ? 'فاتورة مبيعات جديدة' : 'فاتورة مشتريات جديدة'}</span>
           </h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle>بيانات الفاتورة</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg sm:text-xl">بيانات الفاتورة</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>العميل</Label>
+                  <Label className="text-sm">العميل</Label>
                   <Select value={customerId} onValueChange={setCustomerId}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm">
                       <SelectValue placeholder="اختر العميل" />
                     </SelectTrigger>
                     <SelectContent>
@@ -191,101 +195,110 @@ export default function CreateInvoice() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>نسبة الضريبة (%)</Label>
+                  <Label className="text-sm">نسبة الضريبة (%)</Label>
                   <Input
                     type="number"
                     value={taxRate}
                     onChange={(e) => setTaxRate(Number(e.target.value))}
                     min={0}
                     max={100}
+                    className="text-sm"
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>ملاحظات</Label>
+                <Label className="text-sm">ملاحظات</Label>
                 <Textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="ملاحظات إضافية..."
+                  className="text-sm min-h-[80px]"
                 />
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-0 shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>عناصر الفاتورة</CardTitle>
-              <Button type="button" variant="outline" size="sm" onClick={addItem}>
-                <Plus className="w-4 h-4 ml-2" />
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <CardTitle className="text-lg sm:text-xl">عناصر الفاتورة</CardTitle>
+              <Button type="button" variant="outline" size="sm" onClick={addItem} className="h-8 text-xs sm:text-sm">
+                <Plus className="w-4 h-4 ml-1 sm:ml-2" />
                 إضافة عنصر
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-              {items.map((item, index) => (
-                <div key={item.id} className="grid grid-cols-12 gap-4 items-end p-4 bg-muted/50 rounded-lg">
-                  <div className="col-span-5 space-y-2">
-                    <Label>الوصف</Label>
-                    <Input
-                      value={item.description}
-                      onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                      placeholder="وصف العنصر"
-                      required
-                    />
+              <div className="space-y-4">
+                {items.map((item, index) => (
+                  <div key={item.id} className="flex flex-col gap-3 p-3 sm:p-4 bg-muted/50 rounded-lg relative">
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-end">
+                      <div className="sm:col-span-5 space-y-2">
+                        <Label className="text-xs sm:text-sm">الوصف</Label>
+                        <Input
+                          value={item.description}
+                          onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                          placeholder="وصف العنصر"
+                          required
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="grid grid-cols-3 sm:col-span-6 gap-2 sm:gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs sm:text-sm">الكمية</Label>
+                          <Input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => updateItem(item.id, 'quantity', Number(e.target.value))}
+                            min={1}
+                            required
+                            className="text-sm px-2"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs sm:text-sm">السعر</Label>
+                          <Input
+                            type="number"
+                            value={item.unit_price}
+                            onChange={(e) => updateItem(item.id, 'unit_price', Number(e.target.value))}
+                            min={0}
+                            step="0.01"
+                            required
+                            className="text-sm px-2"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs sm:text-sm">الإجمالي</Label>
+                          <div className="h-10 flex items-center font-medium text-xs sm:text-sm truncate">
+                            {item.total_price.toLocaleString('ar-SA')}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="sm:col-span-1 flex justify-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive h-8 w-8"
+                          onClick={() => removeItem(item.id)}
+                          disabled={items.length === 1}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="col-span-2 space-y-2">
-                    <Label>الكمية</Label>
-                    <Input
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) => updateItem(item.id, 'quantity', Number(e.target.value))}
-                      min={1}
-                      required
-                    />
-                  </div>
-                  <div className="col-span-2 space-y-2">
-                    <Label>السعر</Label>
-                    <Input
-                      type="number"
-                      value={item.unit_price}
-                      onChange={(e) => updateItem(item.id, 'unit_price', Number(e.target.value))}
-                      min={0}
-                      step="0.01"
-                      required
-                    />
-                  </div>
-                  <div className="col-span-2 space-y-2">
-                    <Label>الإجمالي</Label>
-                    <Input
-                      value={item.total_price.toLocaleString('ar-SA')}
-                      disabled
-                      className="bg-background"
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => removeItem(item.id)}
-                      disabled={items.length === 1}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
 
               <div className="border-t pt-4 mt-6 space-y-2">
-                <div className="flex justify-between text-lg">
+                <div className="flex justify-between text-sm sm:text-base">
                   <span>المجموع الفرعي:</span>
                   <span>{subtotal.toLocaleString('ar-SA')} ر.س</span>
                 </div>
-                <div className="flex justify-between text-lg">
+                <div className="flex justify-between text-sm sm:text-base">
                   <span>الضريبة ({taxRate}%):</span>
                   <span>{taxAmount.toLocaleString('ar-SA')} ر.س</span>
                 </div>
-                <div className="flex justify-between text-xl font-bold text-primary">
+                <div className="flex justify-between text-lg sm:text-xl font-bold text-primary">
                   <span>الإجمالي:</span>
                   <span>{total.toLocaleString('ar-SA')} ر.س</span>
                 </div>
@@ -293,11 +306,11 @@ export default function CreateInvoice() {
             </CardContent>
           </Card>
 
-          <div className="flex gap-4 justify-end">
-            <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+          <div className="flex gap-3 sm:gap-4 justify-end">
+            <Button type="button" variant="outline" onClick={() => navigate(-1)} className="flex-1 sm:flex-none">
               إلغاء
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="flex-1 sm:flex-none">
               {loading ? (
                 <>
                   <Loader2 className="ml-2 h-4 w-4 animate-spin" />
