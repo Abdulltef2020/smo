@@ -37,8 +37,11 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 interface ReportData {
   totalSales: number;
   totalPurchases: number;
+  totalTax: number;
   netProfit: number;
   invoiceCount: number;
+  paidCount: number;
+  pendingCount: number;
   byAccountant: {
     name: string;
     sales: number;
@@ -91,23 +94,33 @@ export default function Reports() {
 
       if (error) throw error;
 
-      const totalSales = invoices?.filter(i => i.invoice_type === 'sale')
-        .reduce((sum, i) => sum + Number(i.total_amount), 0) || 0;
+      const saleInvoices = invoices?.filter(i => i.invoice_type === 'sale') || [];
+      const purchaseInvoices = invoices?.filter(i => i.invoice_type === 'purchase') || [];
       
-      const totalPurchases = invoices?.filter(i => i.invoice_type === 'purchase')
-        .reduce((sum, i) => sum + Number(i.total_amount), 0) || 0;
+      const totalSales = saleInvoices.reduce((sum, i) => sum + Number(i.total_amount), 0);
+      const totalPurchases = purchaseInvoices.reduce((sum, i) => sum + Number(i.total_amount), 0);
+      const totalTax = invoices?.reduce((sum, i) => sum + Number(i.tax_amount), 0) || 0;
+      const paidCount = invoices?.filter(i => i.status === 'paid').length || 0;
+      const pendingCount = invoices?.filter(i => i.status === 'pending').length || 0;
+
+      // Fetch profiles for accountant names
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name');
+      
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p.full_name]) || []);
 
       // Group by accountant
       const accountantMap = new Map<string, { sales: number; purchases: number }>();
       invoices?.forEach(inv => {
-        const name = inv.accountant_id || 'غير معروف';
-        const existing = accountantMap.get(name) || { sales: 0, purchases: 0 };
+        const accountantName = profileMap.get(inv.accountant_id) || 'غير معروف';
+        const existing = accountantMap.get(accountantName) || { sales: 0, purchases: 0 };
         if (inv.invoice_type === 'sale') {
           existing.sales += Number(inv.total_amount);
         } else {
           existing.purchases += Number(inv.total_amount);
         }
-        accountantMap.set(name, existing);
+        accountantMap.set(accountantName, existing);
       });
 
       const byAccountant = Array.from(accountantMap.entries()).map(([name, data]) => ({
@@ -138,8 +151,11 @@ export default function Reports() {
       setReportData({
         totalSales,
         totalPurchases,
+        totalTax,
         netProfit: totalSales - totalPurchases,
         invoiceCount: invoices?.length || 0,
+        paidCount,
+        pendingCount,
         byAccountant,
         byMonth,
       });
@@ -229,18 +245,18 @@ export default function Reports() {
         ) : reportData && (
           <>
             {/* Summary Cards */}
-            <div className="grid gap-6 md:grid-cols-4">
+            <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
               <Card className="border-0 shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                  <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                     إجمالي المبيعات
                   </CardTitle>
                   <div className="p-2 rounded-lg bg-accent/10">
-                    <TrendingUp className="w-5 h-5 text-accent" />
+                    <TrendingUp className="w-4 sm:w-5 h-4 sm:h-5 text-accent" />
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-accent">
+                  <div className="text-lg sm:text-2xl font-bold text-accent">
                     {reportData.totalSales.toLocaleString('ar-SA')} ر.س
                   </div>
                 </CardContent>
@@ -248,15 +264,15 @@ export default function Reports() {
 
               <Card className="border-0 shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                  <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                     إجمالي المشتريات
                   </CardTitle>
                   <div className="p-2 rounded-lg bg-warning/10">
-                    <TrendingDown className="w-5 h-5 text-warning" />
+                    <TrendingDown className="w-4 sm:w-5 h-4 sm:h-5 text-warning" />
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-warning">
+                  <div className="text-lg sm:text-2xl font-bold text-warning">
                     {reportData.totalPurchases.toLocaleString('ar-SA')} ر.س
                   </div>
                 </CardContent>
@@ -264,15 +280,15 @@ export default function Reports() {
 
               <Card className="border-0 shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                  <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                     صافي الربح
                   </CardTitle>
                   <div className="p-2 rounded-lg bg-primary/10">
-                    <DollarSign className="w-5 h-5 text-primary" />
+                    <DollarSign className="w-4 sm:w-5 h-4 sm:h-5 text-primary" />
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className={`text-2xl font-bold ${reportData.netProfit >= 0 ? 'text-accent' : 'text-destructive'}`}>
+                  <div className={`text-lg sm:text-2xl font-bold ${reportData.netProfit >= 0 ? 'text-accent' : 'text-destructive'}`}>
                     {reportData.netProfit.toLocaleString('ar-SA')} ر.س
                   </div>
                 </CardContent>
@@ -280,16 +296,58 @@ export default function Reports() {
 
               <Card className="border-0 shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    عدد الفواتير
+                  <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                    إجمالي الضريبة
                   </CardTitle>
                   <div className="p-2 rounded-lg bg-info/10">
-                    <FileText className="w-5 h-5 text-info" />
+                    <FileText className="w-4 sm:w-5 h-4 sm:h-5 text-info" />
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-info">
+                  <div className="text-lg sm:text-2xl font-bold text-info">
+                    {reportData.totalTax.toLocaleString('ar-SA')} ر.س
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Second Row Stats */}
+            <div className="grid gap-4 sm:gap-6 grid-cols-3">
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                    إجمالي الفواتير
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-xl sm:text-3xl font-bold text-foreground">
                     {reportData.invoiceCount.toLocaleString('ar-SA')}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                    فواتير مدفوعة
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-xl sm:text-3xl font-bold text-accent">
+                    {reportData.paidCount.toLocaleString('ar-SA')}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                    فواتير معلقة
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-xl sm:text-3xl font-bold text-warning">
+                    {reportData.pendingCount.toLocaleString('ar-SA')}
                   </div>
                 </CardContent>
               </Card>
