@@ -1,8 +1,11 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AIAssistantButton } from '@/components/ai/AIAssistantButton';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -10,6 +13,44 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { toggleSidebar } = useSidebar();
+  const { role, user } = useAuth();
+  const [aiContext, setAiContext] = useState<Record<string, unknown>>({});
+
+  useEffect(() => {
+    const fetchContext = async () => {
+      try {
+        let invoicesQuery = supabase.from('invoices').select('*');
+        
+        if (role !== 'admin') {
+          invoicesQuery = invoicesQuery.eq('accountant_id', user?.id);
+        }
+        
+        const { data: invoices } = await invoicesQuery;
+        
+        const saleInvoices = invoices?.filter(i => i.invoice_type === 'sale') || [];
+        const purchaseInvoices = invoices?.filter(i => i.invoice_type === 'purchase') || [];
+        
+        const totalSales = saleInvoices.reduce((sum, i) => sum + Number(i.total_amount), 0);
+        const totalPurchases = purchaseInvoices.reduce((sum, i) => sum + Number(i.total_amount), 0);
+        const totalTax = invoices?.reduce((sum, i) => sum + Number(i.tax_amount), 0) || 0;
+
+        setAiContext({
+          totalSales,
+          totalPurchases,
+          netProfit: totalSales - totalPurchases,
+          totalTax,
+          invoiceCount: invoices?.length || 0,
+          paidCount: invoices?.filter(i => i.status === 'paid').length || 0,
+          pendingCount: invoices?.filter(i => i.status === 'pending').length || 0,
+          userRole: role,
+        });
+      } catch (error) {
+        console.error('Error fetching AI context:', error);
+      }
+    };
+
+    fetchContext();
+  }, [role, user?.id]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -35,6 +76,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <main className="md:mr-64 min-h-screen pt-16 md:pt-0 md:p-8 p-4 sm:p-6">
         {children}
       </main>
+
+      {/* AI Assistant */}
+      <AIAssistantButton context={aiContext} />
     </div>
   );
 }
